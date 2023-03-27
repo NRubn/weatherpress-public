@@ -1,0 +1,2 @@
+# weatherpress-public-
+Wordpress Weatherplugin

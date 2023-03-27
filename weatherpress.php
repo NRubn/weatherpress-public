@@ -3,17 +3,14 @@
 Plugin Name: Weatherpress
 Plugin URI: https:/https://github.com/NRubn/weatherpress/
 Description: Wetterdaten auf deine Wordpresseite
-Version: 1.0.3
+Version: 1.0.5
 Author: Ruben
 Author URI: https://google.de/
 License: GPL-2.0+
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 */
 
-/*INSERT OPENWEATHERMAP TOKEN HERE:*/
-$openweathermapkey = OPENWEATHERMAP_TOKEN;
-/*https://openweathermap.org/appid*/
-
+$openweathermapkey = OPENWEATHERTOKEN;
 
 function weatherpress_add_menu_page() {
     add_menu_page(
@@ -86,15 +83,9 @@ function weatherpress_settings_page() {
 	echo '<br>longitute: '.$citylon.'</p>';
 	
 	$weatherdata = weathercurl($citylat, $citylon);
-	
+	$html = generateweatheroutput($city_name);	
 	echo '<br>';
-	$sky = $weatherdata['weather'][0]['description'];
-	$skyicon = $weatherdata['weather'][0]['icon'];
-	$temp = $weatherdata['main']['temp'];
-	echo 'Stadt: '.$city_name.'<br>';
-	echo 'Himmel: '.$sky.' <img class="weatherpressicon" width="50" height="50" src="https://openweathermap.org/img/wn/'.$skyicon.'@2x.png"><br>';
-	echo 'Temperatur: '.$temp.'<br>';
-	
+	echo $html;
 }
 
 function citydatacurl($city_name){
@@ -157,10 +148,25 @@ function weatherpress_shortcode( $atts ) {
 	$city_name = $atts['city'];
 	$unit = $atts['unit'];
 	$icon = $atts['icon'];
-	$citydata = citydatacurl($city_name);
+
+	$output = '';
+	$output = generateweatheroutput($city_name, $unit, $icon);
+
+    return $output;
+}
+
+// [weatherpress city="Your City" unit="metric" icon="true"]
+add_shortcode( 'weatherpress', 'weatherpress_shortcode' );
+
+// HTML erstellen:
+function generateweatheroutput($city = "dortmund", $unit = "metric", $icon = "openweathermap"){
+	
+	$output = '';
+	
+	$citydata = citydatacurl($city);
 	$citylat = $citydata[0]['lat'];
 	$citylon = $citydata[0]['lon'];
-		
+	
 	$weatherdata = weathercurl($citylat, $citylon, $unit);
 	
     // Füge den Shortcode-Inhalt hinzu
@@ -169,7 +175,7 @@ function weatherpress_shortcode( $atts ) {
 	$temp = $weatherdata['main']['temp'];
 	
 	//Prüfen ob openweathermap.org Icon erlaubt ist
-	switch ($atts['icon']) {
+	switch ($icon) {
     case 'openweathermap';
         $weathericon = '<img class="weatherpressicon" width="50" height="50" src="https://openweathermap.org/img/wn/'.$skyicon.'@2x.png">';
         break;
@@ -187,10 +193,11 @@ function weatherpress_shortcode( $atts ) {
 		$itis ='hot';
 	}else{
 		$itis ='normal';
-	}
+	};
+	
 	$output = '<div class="weatherpressapi '.$itis.'"><b>Das Wetter</b>';
 	$output .= '<br>';
-	$output .= '<div class="weatherpresscity">Stadt: '.$city_name.'</div>';
+	$output .= '<div class="weatherpresscity">Stadt: '.$city.'</div>';
 	$output .= '<div class="weatherpresssky">Himmel: '.$sky.$weathericon.'</div>';
 	$output .= '<div class="weatherpresstemp">Temperatur: '.$temp.'</div>';
 	$output .= '</div>';
@@ -215,16 +222,9 @@ function weatherpress_shortcode( $atts ) {
 	}
 	
 	</style>';
+	
+	return $output;
+};
 
-	//ICONS
-	//<span class="dashicons dashicons-warning"></span>
-	//
-
-    // Gib den Shortcode-Inhalt aus
-    return $output;
-}
-
-// [weatherpress city="Your City" unit="metric" icon="true"]
-add_shortcode( 'weatherpress', 'weatherpress_shortcode' );
 
 ?>

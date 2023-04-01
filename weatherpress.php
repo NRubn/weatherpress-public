@@ -3,14 +3,14 @@
 Plugin Name: Weatherpress
 Plugin URI: https:/https://github.com/NRubn/weatherpress/
 Description: Wetterdaten auf deine Wordpresseite
-Version: 1.0.5
+Version: 1.1.0
 Author: Ruben
 Author URI: https://google.de/
 License: GPL-2.0+
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 */
 
-$openweathermapkey = OPENWEATHERTOKEN;
+$openweathermapkey = 'PLEASE INSERT';
 
 function weatherpress_add_menu_page() {
     add_menu_page(
@@ -55,35 +55,84 @@ function weatherpress_settings_page() {
         $city_name = 'Dortmund';
     }
 	
+	if ( isset( $_POST['icon'] ) ) {
+		echo 'icon: '.$_POST['icon'].'<br>';
+        $icon = $_POST['icon'];
+    } else {
+        $icon = 'openweathermap';
+    }
+	
+	if (isset($_POST['Openweathermapkey'])) {
+	$filename = 'openweathermap.txt';
+	$handle = fopen($filename, 'w');
+	fwrite($handle, $_POST['Openweathermapkey']);
+	fclose($handle);
+	echo "Der OpenWeatherMap API-Schlüssel wurde erfolgreich in der Datei $filename gespeichert.";
+	}
+	
+	// Pfad zur Textdatei
+$file_path = 'openweathermap.txt';
+
+	// Prüfen, ob Datei vorhanden ist
+	if (file_exists($file_path)) {
+    // Datei öffnen und Inhalt in Variable speichern
+    $openweathermapkey = file_get_contents($file_path);
+    echo 'Der OpenWeatherMap Key lautet: ' . $openweathermapkey ;
+	} else {
+    echo 'Die Datei openweathermap.txt existiert nicht.';
+	}
 	
 	?>
     <div class="wrap">
         <h1>My Plugin Settings</h1>
+        <h2>OpenWeatherMap API-Schlüssel</h2>
+		<form method="POST">
+		<label for="Openweathermapkey">OpenWeatherMap API-Schlüssel:</label>
+		<input type="text" name="Openweathermapkey" value="<?php echo $openweathermapkey; ?>">
+		<input type="submit" value="Speichern">
+		</form>
+		
+		<h2>Stadt auswählen</h2>
         <form method="post" action="admin.php?page=weatherpress-settings">
             <table class="form-table">
                 <tr valign="top">
                     <th scope="row"><span class="dashicons dashicons-location-alt"></span>Stadt:</th>
                     <td><input type="text" name="city_name" value="<?php echo $city_name ?>" /></td>
                 </tr>
-            </table>
+            <tr valign="top">
+            <th scope="row"><span class="dashicons dashicons-admin-site"></span>Icon:</th>
+            <td>
+                <select name="icon">
+                    <option value="openweathermap" <?php selected($icon, 'openweathermap'); ?>>openweathermap</option>
+                    <option value="emoji" <?php selected($icon, 'emoji'); ?>>emojie</option>
+                    <option value="none" <?php selected($icon, 'none'); ?>>none</option>
+                </select>
+            </td>
+        </tr>
+    </table>
 			<?php submit_button(); ?>
         </form>
 	<br>
-	<p>Shortcode: "[weatherpress city="<?php echo $city_name ?>" unit="metric" icon="openweathermap"]"</p>
-	<p>Mögliche Icons: icon="openweathermap", icon="emojie", icon="none"</p>
+	<p>Shortcode:<div id="shortcode">[weatherpress city="<?php echo $city_name ?>" unit="metric" icon="<?php echo $icon ?>"]</div></p>
+	<button onclick="copyToClipboard()">In Zwischenablage kopieren</button>
 	<br>
     </div>
     <?php
 	$citydata = citydatacurl($city_name);
 	$citylat = $citydata[0]['lat'];
 	$citylon = $citydata[0]['lon'];
-	
-	echo '<p>Koordinaten:<br>';
-	echo 'latitute: '.$citylat;
-	echo '<br>longitute: '.$citylon.'</p>';
-	
+	$unit = 'metric';
 	$weatherdata = weathercurl($citylat, $citylon);
-	$html = generateweatheroutput($city_name);	
+	$html = generateweatheroutput($city_name, $unit, $icon);
+	$html .= '<script>function copyToClipboard() {
+	  var copyText = document.getElementById("shortcode");
+	  var range = document.createRange();
+	  range.selectNode(copyText);
+	  window.getSelection().removeAllRanges();
+	  window.getSelection().addRange(range);
+	  document.execCommand("copy");
+	}
+	</script>';
 	echo '<br>';
 	echo $html;
 }

@@ -3,14 +3,20 @@
 Plugin Name: Weatherpress
 Plugin URI: https:/https://github.com/NRubn/weatherpress/
 Description: Wetterdaten auf deine Wordpresseite
-Version: 1.1.0
+Version: 1.1.1
 Author: Ruben
 Author URI: https://google.de/
 License: GPL-2.0+
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 */
 
-$openweathermapkey = 'PLEASE INSERT';
+//$openweathermapkey = '';
+$file_path = 'openweathermap.txt';
+if (file_exists($file_path)) {
+$openweathermapkey = file_get_contents($file_path);
+}else{
+$openweathermapkey = 'PLEASE INSERT API KEY';
+}
 
 function weatherpress_add_menu_page() {
     add_menu_page(
@@ -46,7 +52,8 @@ function weatherpress_activate_uninstall() {
 register_uninstall_hook( __FILE__, 'mein_plugin_uninstall' );
 
 function weatherpress_settings_page() {
-    
+    global $openweathermapkey;
+	
 	echo "Start";
 	if ( isset( $_POST['city_name'] ) ) {
 		echo 'City: '.$_POST['city_name'].'<br>';
@@ -69,19 +76,7 @@ function weatherpress_settings_page() {
 	fclose($handle);
 	echo "Der OpenWeatherMap API-Schlüssel wurde erfolgreich in der Datei $filename gespeichert.";
 	}
-	
-	// Pfad zur Textdatei
-$file_path = 'openweathermap.txt';
 
-	// Prüfen, ob Datei vorhanden ist
-	if (file_exists($file_path)) {
-    // Datei öffnen und Inhalt in Variable speichern
-    $openweathermapkey = file_get_contents($file_path);
-    echo 'Der OpenWeatherMap Key lautet: ' . $openweathermapkey ;
-	} else {
-    echo 'Die Datei openweathermap.txt existiert nicht.';
-	}
-	
 	?>
     <div class="wrap">
         <h1>My Plugin Settings</h1>
